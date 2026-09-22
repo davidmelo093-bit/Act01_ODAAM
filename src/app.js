@@ -9,12 +9,19 @@ import jwt from 'jsonwebtoken';
 import MessageModel from './models/message.model.js';
 import authRouter from './controllers/auth.controller.js';
 import productRouter from './routes/product.routes.js';
+import userRouter from './routes/user.routes.js';
 
 const app = express();
 
-// CORS: permitir peticiones desde el frontend React (Vite)
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: function (origin, callback) {
+        // Permite si no hay origen (ej. Postman) o si incluye "localhost" o "127.0.0.1"
+        if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+            callback(null, true);
+        } else {
+            callback(new Error('No permitido por CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
@@ -104,6 +111,8 @@ io.on('connection', async (socket) => {
 app.use('/auth', authRouter);
 //Ruta de productos
 app.use('/products', productRouter);
+//Ruta de usuarios (stats del usuario autenticado)
+app.use('/users', userRouter);
 
 //Configuración servidor
 const PORT = process.env.PORT || 3000;

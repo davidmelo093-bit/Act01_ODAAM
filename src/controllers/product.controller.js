@@ -42,13 +42,23 @@ export const create = async (req, res) => {
             return res.status(400).json({ error: 'El precio no puede ser cero' });
         }
 
-        const newProduct = await ProductModel.create(name, price);
+        const created_by = req.user?.id; // Inyectado por authJWT middleware
+        if (!created_by) {
+            return res.status(401).json({ error: 'No se pudo identificar al usuario autenticado' });
+        }
+
+        const newProduct = await ProductModel.create(name, price, created_by);
         res.status(201).json(Array.isArray(newProduct) ? newProduct[0] : newProduct);
 
     } catch (error) {
-        res.status(500).json({ error: 'Error al crear el producto' });
+        console.error('[POST /products] Error al crear producto:', error.message);
+        res.status(500).json({
+            error: 'Error al crear el producto',
+            ...(process.env.NODE_ENV !== 'production' && { detail: error.message })
+        });
     }
 };
+
 
 // 4. PUT /products/:id - Reemplazo total de un producto (Con autorización)
 export const update = async (req, res) => {

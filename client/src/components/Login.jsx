@@ -10,7 +10,6 @@ export default function Login({ onLoginSuccess }) {
         setError('');
 
         try {
-            // Petición HTTP POST al endpoint de autenticación
             const response = await fetch('http://localhost:3005/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -23,9 +22,14 @@ export default function Login({ onLoginSuccess }) {
                 throw new Error(data.error || 'Credenciales incorrectas');
             }
 
-            // Almacenamos el token en localStorage y notificamos a la App
-            localStorage.setItem('token', data.token);
-            onLoginSuccess(data.token);
+            // Extraer username del payload JWT (sin verificar firma — solo display)
+            let username = email;
+            try {
+                const payload = JSON.parse(atob(data.token.split('.')[1]));
+                username = payload.username ?? email;
+            } catch (_) { /* mantener email como fallback */ }
+
+            onLoginSuccess(data.token, username);
         } catch (err) {
             setError(err.message);
         }

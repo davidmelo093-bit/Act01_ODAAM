@@ -1,27 +1,33 @@
-
 import pool from '../config/db.js';
 
 class ProductModel {
 
   //GET BY ID
   static async getById(id) {
-    const query = 'SELECT * FROM products WHERE id = $1';
+    const query = `
+      SELECT p.*, u.username AS created_by_username
+      FROM products p
+      LEFT JOIN users u ON u.id = p.created_by
+      WHERE p.id = $1`;
     const { rows } = await pool.query(query, [id]);
     return rows.length > 0 ? rows[0] : null;
   }
 
   //GET
   static async getAll() {
-    const query = 'SELECT * FROM products ORDER BY id ASC';
+    const query = `
+      SELECT p.*, u.username AS created_by_username
+      FROM products p
+      LEFT JOIN users u ON u.id = p.created_by
+      ORDER BY p.id ASC`;
     const { rows } = await pool.query(query);
     return rows;
   }
 
   //POST
-  static async create(name, price) {
-    const query = 'INSERT INTO products (name, price) VALUES ($1, $2) RETURNING *';
-    const values = [name, price];
-    const { rows } = await pool.query(query, values);
+  static async create(name, price, created_by) {
+    const query = 'INSERT INTO products (name, price, created_by) VALUES ($1, $2, $3) RETURNING *';
+    const { rows } = await pool.query(query, [name, price, created_by]);
     return rows[0];
   }
 
